@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "cpu.h"
 #define DATA_LEN 6
+#include <string.h>
 
 // Step 2
 // In cpu.c, add functions cpu_ram_read() and cpu_ram_write() that access the RAM inside the struct cpu.
@@ -16,10 +17,12 @@ void writeRam(struct cpu *cpu, unsigned char value, unsigned char index)
 
 // read the RAM
 
-void readRam(struct cpu *cpu, unsigned char value, unsigned char index)
+unsigned char readRam(struct cpu *cpu, unsigned char value, unsigned char index)
 {
   /* data */
-  cpu->ram[value] = index;
+  // structure this as a return 
+  // change void
+  return cpu->ram[value] = index;
 };
 
 
@@ -78,13 +81,30 @@ void cpu_run(struct cpu *cpu)
   while (running) {
     // TODO
     // 1. Get the value of the current instruction (in address PC).
+    
+    // unsigned char instructionRegister = cpu->PC;
+    unsigned char instructionRegister = cpu_ram_read(cpu, cpu->PC);
 
 
     // 2. Figure out how many operands this next instruction requires
+    // How?? 
+
 
     // 3. Get the appropriate value(s) of the operands following this instruction
+    unsigned char operandA = cpu_ram_read(cpu, cpu->PC +1);
+    unsigned char operandB = cpu_ram_read(cpu, cpu->PC +2);
 
     // 4. switch() over it to decide on a course of action.
+
+    switch (instructionRegister) 
+    {
+    case HLT:
+      running = 0;
+      break;
+    
+    default:
+      break;
+    }
 
     // 5. Do whatever the instruction should do according to the spec.
 
@@ -100,8 +120,12 @@ void cpu_run(struct cpu *cpu)
 void cpu_init(struct cpu *cpu)
 {
   // TODO: Initialize the PC and other special registers
-  cpu->PC;
-  cpu->ram;
-  cpu->registers;
+  // set to 0
+  cpu->PC = 0;
+  cpu->ram = 0;
+  cpu->registers = 0;
+
+  // use memset() 
+  // void *memset(void *s, int c, size_t n);
 
 }
