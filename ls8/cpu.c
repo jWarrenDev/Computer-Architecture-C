@@ -17,12 +17,12 @@ void writeRam(struct cpu *cpu, unsigned char value, unsigned char index)
 
 // read the RAM
 
-unsigned char readRam(struct cpu *cpu, unsigned char value, unsigned char index)
+unsigned char readRam(struct cpu *cpu, unsigned char value)
 {
   /* data */
   // structure this as a return 
   // change void
-  return cpu->ram[value] = index;
+  return cpu->ram[value];
 };
 
 
@@ -55,16 +55,16 @@ void cpu_load(struct cpu *cpu)
 /**
  * ALU
  */
-void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB)
-{
-  switch (op) {
-    case ALU_MUL:
-      // TODO
-      break;
+// void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB)
+// {
+//   switch (op) {
+//     case ALU_MUL:
+//       // TODO
+//       break;
 
-    // TODO: implement more ALU ops
-  }
-}
+//     // TODO: implement more ALU ops
+//   }
+// }
 
 
 
@@ -83,28 +83,38 @@ void cpu_run(struct cpu *cpu)
     // 1. Get the value of the current instruction (in address PC).
     
     // unsigned char instructionRegister = cpu->PC;
-    unsigned char instructionRegister = cpu_ram_read(cpu, cpu->PC);
+    unsigned char instructionRegister = readRam(cpu, cpu->PC);
 
 
     // 2. Figure out how many operands this next instruction requires
-    // How?? 
+    unsigned int numberOperands = instructionRegister >> 6;
 
 
     // 3. Get the appropriate value(s) of the operands following this instruction
-    unsigned char operandA = cpu_ram_read(cpu, cpu->PC +1);
-    unsigned char operandB = cpu_ram_read(cpu, cpu->PC +2);
+    unsigned char operandA = readRam(cpu, cpu->PC +1);
+    unsigned char operandB = readRam(cpu, cpu->PC +2);
 
     // 4. switch() over it to decide on a course of action.
 
-    switch (instructionRegister) 
-    {
-    case HLT:
-      running = 0;
-      break;
-    
-    default:
-      break;
-    }
+      switch (instructionRegister) {
+        case LDI:
+          cpu->registers[operandA] = operandB;
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
+
+        case PRN:
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
+
+        
+
+        case HLT:
+          running = 0;
+          break;
+        
+        default:
+          break;
+        }
 
     // 5. Do whatever the instruction should do according to the spec.
 
@@ -121,11 +131,14 @@ void cpu_init(struct cpu *cpu)
 {
   // TODO: Initialize the PC and other special registers
   // set to 0
-  cpu->PC = 0;
-  cpu->ram = 0;
-  cpu->registers = 0;
+   cpu->PC = 0;
+  // cpu->ram = 0;
+  // cpu->registers = 0;
 
   // use memset() 
   // void *memset(void *s, int c, size_t n);
+
+  memset(cpu->ram, 0, sizeof(cpu->ram));
+  memset(cpu->registers, 0, 8);
 
 }

@@ -9,7 +9,7 @@ struct cpu {
   // registers (array)
   unsigned char registers[8];
   // ram (array)
-  unsigned ram[512];
+  unsigned ram[256];
 };
 
 // ALU operations
@@ -25,7 +25,8 @@ enum alu_op {
 
 #define LDI  0b10000010
 #define PRN  0b01000111
-#define HLT  0b00000001
+#define HLT  0b00000001 // Step 5.  Add HLT
+
 // TODO: more instructions here. These can be used in cpu_run().
 
 // Function declarations
