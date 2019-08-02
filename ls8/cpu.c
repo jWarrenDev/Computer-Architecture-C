@@ -25,7 +25,18 @@ unsigned char readRam(struct cpu *cpu, unsigned char value)
   return cpu->ram[value];
 };
 
+void push(struct cpu *cpu, unsigned char value)
+{
+  /* data */
+  cpu->registers[7]--; // decrement
+  writeRam(cpu, cpu->registers[7], value);
+};
 
+unsigned char pop(struct cpu *cpu) {
+  unsigned char value = readRam(cpu, cpu->registers[7]);
+  cpu->registers[7]++;
+  return value;
+}
 
 
 /**
@@ -125,13 +136,14 @@ void cpu_run(struct cpu *cpu)
           break;
 
         case PUSH:
-        cpu->registers[operandA];
-        cpu->PC = cpu->PC + numberOperands + 1;
-        break;
+          push(cpu, cpu->registers[operandA]);
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
 
         case POP:
-        cpu->PC = cpu->PC + numberOperands + 1;
-        break;
+          cpu->registers[operandA] = pop(cpu);
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
 
 
         case HLT:
