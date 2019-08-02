@@ -55,16 +55,24 @@ void cpu_load(struct cpu *cpu)
 /**
  * ALU
  */
-// void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB)
-// {
-//   switch (op) {
-//     case ALU_MUL:
-//       // TODO
-//       break;
+void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB)
+{
 
-//     // TODO: implement more ALU ops
-//   }
-// }
+  unsigned int x = cpu->registers[regA];
+  unsigned int y = cpu->registers[regB];
+
+  switch (op) {
+    case ALU_MUL:
+      cpu->registers[x] *= cpu->registers[y];
+      break;
+
+    // TODO: implement more ALU ops
+
+    case ALU_ADD:
+      cpu->registers[x] += cpu->registers[y];
+      break;
+  }
+}
 
 
 
@@ -106,7 +114,25 @@ void cpu_run(struct cpu *cpu)
           cpu->PC = cpu->PC + numberOperands + 1;
           break;
 
-        
+        case MUL: // Multiply the values in two registers together and store the result in registerA.
+          cpu->registers[operandA] *= cpu->registers[operandB];
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
+
+        case ADD: //  Bitwise-AND the values in registerA and registerB, then store the result in registerA.
+          cpu->registers[operandA] += cpu->registers[operandB];
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
+
+        case PUSH:
+        cpu->registers[operandA];
+        cpu->PC = cpu->PC + numberOperands + 1;
+        break;
+
+        case POP:
+        cpu->PC = cpu->PC + numberOperands + 1;
+        break;
+
 
         case HLT:
           running = 0;
