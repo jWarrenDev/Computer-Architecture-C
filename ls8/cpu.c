@@ -25,14 +25,14 @@ unsigned char readRam(struct cpu *cpu, unsigned char value)
   return cpu->ram[value];
 };
 
-void push(struct cpu *cpu, unsigned char value)
+void cpupush(struct cpu *cpu, unsigned char value)
 {
   /* data */
   cpu->registers[7]--; // decrement
   writeRam(cpu, cpu->registers[7], value);
 };
 
-unsigned char pop(struct cpu *cpu) {
+unsigned char cpupop(struct cpu *cpu) {
   unsigned char value = readRam(cpu, cpu->registers[7]);
   cpu->registers[7]++;
   return value;
@@ -44,26 +44,10 @@ unsigned char pop(struct cpu *cpu) {
  */
 void cpu_load(struct cpu *cpu, char *loadFile)
 {
-  // char data[DATA_LEN] = {
-  //   // From print8.ls8
-  //   0b10000010, // LDI R0,8
-  //   0b00000000,
-  //   0b00001000,
-  //   0b01000111, // PRN R0
-  //   0b00000000,
-  //   0b00000001  // HLT
-  // };
-
-  // int address = 0;
-
-  // for (int i = 0; i < DATA_LEN; i++) {
-  //   cpu->ram[address++] = data[i];
-  // }
-
+  
   // TODO: Replace this with something less hard-coded
 
-    FILE *fp;
-    fp = fopen(loadFile, "r");
+    FILE *fp = fopen(loadFile, "r");
     char line[1024];
     int address = 0;
 
@@ -71,12 +55,13 @@ void cpu_load(struct cpu *cpu, char *loadFile)
     while (fgets(line, sizeof(line), fp) != NULL)
     {
         char *END;
-        unsigned char value = strtoul(line, &END, 2) & 0xFF;
+        unsigned char value = strtoul(line, &END, 2);
         if (END == line)
         {
             continue;
         }
-        writeRam(cpu, address++, value);
+        //writeRam(cpu, address++, value);
+        cpu->ram[address++] = value; // ATEHWLEWKKSLKTW~~~~!!!!!!
     }
     
     fclose(fp);
@@ -98,10 +83,20 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
       break;
 
     // TODO: implement more ALU ops
-
     case ALU_ADD:
       cpu->registers[x] += cpu->registers[y];
       break;
+
+    case ALU_CMP:
+        if (cpu->registers[x] == cpu->registers[y]) {
+            cpu->flag = 1;
+        }
+        else {
+            cpu->flag = 0;
+        }
+        cpu->PC = cpu->PC + op + 1;
+        break;
+       
   }
 }
 
@@ -130,8 +125,9 @@ void cpu_run(struct cpu *cpu)
 
 
     // 3. Get the appropriate value(s) of the operands following this instruction
-    unsigned char operandA = readRam(cpu, cpu->PC +1);
-    unsigned char operandB = readRam(cpu, cpu->PC +2);
+    unsigned char operandA = readRam(cpu, cpu->PC + 1);
+    unsigned char operandB = readRam(cpu, cpu->PC + 2);
+
 
     // 4. switch() over it to decide on a course of action.
 
@@ -142,6 +138,7 @@ void cpu_run(struct cpu *cpu)
           break;
 
         case PRN:
+         printf("This is the number %d\n", cpu->registers[operandA]);
           cpu->PC = cpu->PC + numberOperands + 1;
           break;
 
@@ -156,21 +153,62 @@ void cpu_run(struct cpu *cpu)
           break;
 
         case PUSH:
-          push(cpu, cpu->registers[operandA]);
+          cpupush(cpu, cpu->registers[operandA]);
           cpu->PC = cpu->PC + numberOperands + 1;
           break;
 
         case POP:
-          cpu->registers[operandA] = pop(cpu);
+          cpu->registers[operandA] = cpupop(cpu);
           cpu->PC = cpu->PC + numberOperands + 1;
           break;
 
+        case CMP:
+           if (cpu->registers[operandA] == cpu->registers[operandB]) {
+              cpu->flag = 1;
+              } else {
+              cpu->flag = 0;
+              }
+              cpu->PC = cpu->PC + numberOperands + 1;
+              break;
+
+        case CALL:
+          cpupush(cpu, cpu->PC + 2);
+          cpu->PC = cpu->PC + numberOperands + 1;
+          break;
+
+        case RET:
+          cpu->PC = cpupop(cpu);
+          break;
+        
+        case JMP:
+          cpu->PC = cpu->registers[operandA];
+          break;
+
+        case JEQ:
+          if (cpu->flag == 1) {
+           cpu->PC = cpu->registers[operandA];
+          } else {
+           cpu->PC = cpu->PC + numberOperands + 1;
+          }
+          break;
+
+        case JNE:
+          if (cpu->flag != 1) {
+            cpu->PC = cpu->registers[operandA];
+            } else {
+              cpu->PC = cpu->PC + numberOperands + 1;
+            }
+            break;
+
+        
 
         case HLT:
           running = 0;
           break;
         
         default:
+        printf("Unexpected instruction 0x%02X at 0%02X\n", instructionRegister, cpu->PC);
+           exit(1);
           break;
         }
 
@@ -190,8 +228,10 @@ void cpu_init(struct cpu *cpu)
   // TODO: Initialize the PC and other special registers
   // set to 0
    cpu->PC = 0;
+   cpu->flag = 0;
   // cpu->ram = 0;
   // cpu->registers = 0;
+   cpu->registers[7] = 0xF4;
 
   // use memset() 
   // void *memset(void *s, int c, size_t n);
